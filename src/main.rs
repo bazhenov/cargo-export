@@ -19,7 +19,9 @@ struct CompilerArtifact {
 // struct Opts {}
 
 fn main() {
-    let args: Vec<_> = std::env::args().collect();
+    // skipping program name in arguments list
+    let args = std::env::args().skip(1).collect::<Vec<_>>();
+    let args = args.iter().map(|s| s.as_ref()).collect::<Vec<&str>>();
 
     let mut opts = Options::new();
     opts.optflag("h", "help", "print this help menu");
@@ -30,7 +32,15 @@ fn main() {
         "do not add default cargo options (--no-run, --message-format)",
     );
 
-    let matches = match opts.parse(&args) {
+    // splitting our/cargo arguments using `--` as a delimeter
+    let (self_args, cargo_args) = if let Some(pos) = args.iter().position(|i| *i == "--") {
+        (&args[0..pos], &args[pos + 1..])
+    } else {
+        (&args[..], &args[0..0])
+    };
+    let mut cargo_args = cargo_args.iter().map(|s| s.as_ref()).collect::<Vec<_>>();
+
+    let matches = match opts.parse(self_args) {
         Ok(m) => m,
         Err(f) => print_usage(&opts, Some(f)),
     };
@@ -39,14 +49,6 @@ fn main() {
         print_usage(&opts, None);
     }
 
-    let cargo_args_pos = args.iter().position(|i| i == "--");
-    let Some(cargo_args_pos) = cargo_args_pos else {
-        print_usage(&opts, Some(Fail::OptionMissing("CARGO_COMMAND".to_string())));
-    };
-    let mut cargo_args = args[cargo_args_pos + 1..]
-        .iter()
-        .map(|i| i.as_str())
-        .collect::<Vec<_>>();
     if cargo_args.is_empty() {
         print_usage(
             &opts,
@@ -117,6 +119,16 @@ fn print_usage(opts: &Options, fail: Option<Fail>) -> ! {
     }
     let brief = "usage: cargo export [OPTIONS] PATH -- CARGO_COMMAND [CARGO_OPTIONS...]";
     eprintln!("{}", opts.usage(brief));
+
+    eprintln!();
+    eprintln!("  Examples:");
+    eprintln!();
+    eprintln!("    $ cargo export target/tests -- test");
+    eprintln!("      Exporting all test binaries in target/tests directory");
+    eprintln!();
+    eprintln!("    $ cargo export target/benches -- bench");
+    eprintln!("      Exporting all benchmark binaries in target/tests directory");
+    eprintln!();
     exit(1)
 }
 

@@ -2,6 +2,7 @@ use getopts::{Fail, Options};
 use serde::Deserialize;
 use serde_json::Value;
 use std::{
+    collections::VecDeque,
     fs,
     io::{BufRead, BufReader},
     path::PathBuf,
@@ -14,23 +15,13 @@ struct CompilerArtifact {
     executable: String,
 }
 
-// #[derive(Parser, Debug)]
-// #[command(author, version, about, long_about = None)]
-// struct Opts {}
-
 fn main() {
     // skipping program name in arguments list
-    let args = std::env::args().skip(1).collect::<Vec<_>>();
+    let mut args = std::env::args().collect::<VecDeque<_>>();
+    // skipping "cargo" and "export"
+    args.pop_front();
+    let subcommand_name = args.pop_front().unwrap_or_default();
     let args = args.iter().map(|s| s.as_ref()).collect::<Vec<&str>>();
-
-    let mut opts = Options::new();
-    opts.optflag("h", "help", "print this help menu");
-    opts.optflag("v", "verbose", "prints files copied");
-    opts.optflag(
-        "n",
-        "no-options",
-        "do not add default cargo options (--no-run, --message-format)",
-    );
 
     // splitting our/cargo arguments using `--` as a delimeter
     let (self_args, cargo_args) = if let Some(pos) = args.iter().position(|i| *i == "--") {
@@ -38,8 +29,10 @@ fn main() {
     } else {
         (&args[..], &args[0..0])
     };
-    let mut cargo_args = cargo_args.iter().map(|s| s.as_ref()).collect::<Vec<_>>();
 
+    let mut cargo_args = cargo_args.to_vec();
+
+    let opts = build_opts();
     let matches = match opts.parse(self_args) {
         Ok(m) => m,
         Err(f) => print_usage(&opts, Some(f)),
@@ -49,6 +42,10 @@ fn main() {
         print_usage(&opts, None);
     }
 
+    if subcommand_name != "export" {
+        print_usage(&opts, Some(Fail::UnrecognizedOption(subcommand_name)));
+    }
+
     if cargo_args.is_empty() {
         print_usage(
             &opts,
@@ -56,15 +53,18 @@ fn main() {
         );
     }
 
+    let Some(target) = matches.free.get(0) else {
+        print_usage(&opts, Some(Fail::OptionMissing("PATH".to_string())));
+    };
+
     if !matches.opt_present("n") {
+        // inserting options right after cargo subcommand
         cargo_args.insert(1, "--message-format=json");
         cargo_args.insert(1, "--no-run");
     }
 
     let verbose = matches.opt_present("v");
-    let Some(target) = matches.free.get(0) else {
-        print_usage(&opts, Some(Fail::OptionMissing("PATH".to_string())));
-    };
+
     let target = PathBuf::from(target);
     if !target.exists() {
         fs::create_dir_all(&target).unwrap();
@@ -74,7 +74,7 @@ fn main() {
         .args(cargo_args)
         .stdout(Stdio::piped())
         .spawn()
-        .unwrap();
+        .expect("Unable to spawn cargo process");
     let stdout = command.stdout.take().unwrap();
     let stdout = BufReader::new(stdout);
     let mut artifacts = Vec::new();
@@ -93,7 +93,11 @@ fn main() {
             artifacts.push(message);
         };
     }
-    command.wait().unwrap();
+    let exit_code = command.wait().expect("Failed executing cargo");
+    if !exit_code.success() {
+        eprintln!("[cargo-export] cargo exited with {} status code", exit_code);
+        exit(1);
+    }
 
     for artfact in artifacts {
         let from = PathBuf::from(&artfact.executable);
@@ -108,8 +112,20 @@ fn main() {
                 to.display()
             );
         }
-        fs::copy(from, to).unwrap();
+        fs::copy(from, to).expect("Unable to copy file");
     }
+}
+
+fn build_opts() -> Options {
+    let mut opts = Options::new();
+    opts.optflag("h", "help", "print this help menu");
+    opts.optflag("v", "verbose", "prints files copied");
+    opts.optflag(
+        "n",
+        "no-options",
+        "do not add default cargo options (--no-run, --message-format)",
+    );
+    opts
 }
 
 fn print_usage(opts: &Options, fail: Option<Fail>) -> ! {

@@ -1,9 +1,11 @@
+use getopts::{Fail, Options};
 use serde::Deserialize;
+use serde_json::Value;
 use std::{
     fs,
     io::{BufRead, BufReader},
     path::PathBuf,
-    process::{Command, Stdio},
+    process::{exit, Command, Stdio},
 };
 
 #[derive(Deserialize, Debug)]
@@ -18,18 +20,53 @@ struct CompilerArtifact {
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
-    let extended_args_pos = args.iter().position(|i| i == "--");
-    let Some(extended_args_pos) = extended_args_pos else {
-        panic!("Ooops");
+
+    let mut opts = Options::new();
+    opts.optflag("h", "help", "print this help menu");
+    opts.optflag("v", "verbose", "prints files copied");
+    opts.optflag(
+        "n",
+        "no-options",
+        "do not add default cargo options (--no-run, --message-format)",
+    );
+
+    let matches = match opts.parse(&args) {
+        Ok(m) => m,
+        Err(f) => print_usage(&opts, Some(f)),
     };
-    let _own_args = args[0..extended_args_pos].iter().collect::<Vec<_>>();
-    let mut cargo_args = args[extended_args_pos + 1..]
+
+    if matches.opt_present("h") {
+        print_usage(&opts, None);
+    }
+
+    let cargo_args_pos = args.iter().position(|i| i == "--");
+    let Some(cargo_args_pos) = cargo_args_pos else {
+        print_usage(&opts, Some(Fail::OptionMissing("CARGO_COMMAND".to_string())));
+    };
+    let mut cargo_args = args[cargo_args_pos + 1..]
         .iter()
         .map(|i| i.as_str())
         .collect::<Vec<_>>();
+    if cargo_args.is_empty() {
+        print_usage(
+            &opts,
+            Some(Fail::OptionMissing("CARGO_COMMAND".to_string())),
+        );
+    }
 
-    cargo_args.insert(1, "--message-format=json");
-    cargo_args.insert(1, "--no-run");
+    if !matches.opt_present("n") {
+        cargo_args.insert(1, "--message-format=json");
+        cargo_args.insert(1, "--no-run");
+    }
+
+    let verbose = matches.opt_present("v");
+    let Some(target) = matches.free.get(0) else {
+        print_usage(&opts, Some(Fail::OptionMissing("PATH".to_string())));
+    };
+    let target = PathBuf::from(target);
+    if !target.exists() {
+        fs::create_dir_all(&target).unwrap();
+    }
 
     let mut command = Command::new("cargo")
         .args(cargo_args)
@@ -40,11 +77,18 @@ fn main() {
     let stdout = BufReader::new(stdout);
     let mut artifacts = Vec::new();
     for line in stdout.lines() {
-        let message = serde_json::from_str::<CompilerArtifact>(&line.unwrap());
-        if let Ok(message) = message {
-            if message.reason == "compiler-artifact" {
-                artifacts.push(message);
+        let line = line.unwrap();
+        let Ok(value) = serde_json::from_str::<Value>(&line) else {
+            if verbose {
+                eprintln!("cargo output: {}", line);
             }
+            panic!("Unable to parse json from cargo");
+        };
+        let message = serde_json::from_value::<CompilerArtifact>(value)
+            .ok()
+            .filter(|m| m.reason == "compiler-artifact");
+        if let Some(message) = message {
+            artifacts.push(message);
         };
     }
     command.wait().unwrap();
@@ -53,11 +97,27 @@ fn main() {
         let from = PathBuf::from(&artfact.executable);
         let file_name = from.file_name().and_then(|n| n.to_str()).unwrap();
         let file_name = trim_hash(file_name).unwrap_or(file_name);
-        let to = format!("./{}", file_name);
+        let to = target.join(file_name);
 
-        eprintln!("[cargo-export] copying '{}' to '{}'", from.display(), to);
+        if verbose {
+            eprintln!(
+                "[cargo-export] copying '{}' to '{}'",
+                from.display(),
+                to.display()
+            );
+        }
         fs::copy(from, to).unwrap();
     }
+}
+
+fn print_usage(opts: &Options, fail: Option<Fail>) -> ! {
+    if let Some(fail) = fail {
+        eprintln!("[ERROR]: {}", fail);
+        eprintln!();
+    }
+    let brief = "usage: cargo export [OPTIONS] PATH -- CARGO_COMMAND [CARGO_OPTIONS...]";
+    eprintln!("{}", opts.usage(brief));
+    exit(1)
 }
 
 /// Trims cargo hashe from file name (eg. `app-ebb8dd5b587f73a1` -> `app`)

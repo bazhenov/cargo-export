@@ -11,10 +11,16 @@ For final artifacts we have `target/(release|debug)/{crate-name}`, but test and 
 
 Thankfully compiler generating compiler messages in json format `--message-format=json` which allows to list all compiler generated artifacts/
 
-## Using `cargo-export`
+## Installing
 
 ```console
-$ cargo export -o ./target/tests -- test
+$ cargo install --path=.
+```
+
+## Using
+
+```console
+$ cargo export target/tests -- test
 ```
 
 Under the hood this command will run `cargo test --no-run --message-format=json` and copy all the generated binaries in the `target/tests` dirctory.

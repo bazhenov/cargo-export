@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "cargo-export"
-version = "0.1.0"
+version = "0.1.0-dev"
 dependencies = [
  "getopts",
  "serde",

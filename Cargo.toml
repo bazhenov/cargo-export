@@ -1,6 +1,6 @@
 [package]
 name = "cargo-export"
-version = "0.1.0"
+version = "0.1.0-dev"
 edition = "2021"
 license = "MIT"
 description = "Utility to export compiler artifacts from cargo build process"

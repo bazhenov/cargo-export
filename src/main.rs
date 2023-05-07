@@ -63,6 +63,7 @@ fn main() {
         cargo_args.insert(1, "--no-run");
     }
 
+    let tag_name = matches.opt_str("t");
     let verbose = matches.opt_present("v");
 
     let target = PathBuf::from(target);
@@ -103,7 +104,11 @@ fn main() {
         let from = PathBuf::from(&artfact.executable);
         let file_name = from.file_name().and_then(|n| n.to_str()).unwrap();
         let file_name = trim_hash(file_name).unwrap_or(file_name);
-        let to = target.join(file_name);
+        let to = if let Some(tag_name) = &tag_name {
+            target.join(format!("{}-{}", file_name, tag_name))
+        } else {
+            target.join(file_name)
+        };
 
         if verbose {
             eprintln!(
@@ -118,13 +123,19 @@ fn main() {
 
 fn build_opts() -> Options {
     let mut opts = Options::new();
-    opts.optflag("h", "help", "print this help menu");
-    opts.optflag("v", "verbose", "prints files copied");
+    opts.optopt(
+        "t",
+        "tag",
+        "tag name to add to the resulting binaries file names",
+        "TAG",
+    );
     opts.optflag(
         "n",
-        "no-options",
+        "no-default-options",
         "do not add default cargo options (--no-run, --message-format)",
     );
+    opts.optflag("v", "verbose", "prints files copied");
+    opts.optflag("h", "help", "print this help menu");
     opts
 }
 
@@ -136,7 +147,6 @@ fn print_usage(opts: &Options, fail: Option<Fail>) -> ! {
     let brief = "usage: cargo export [OPTIONS] PATH -- CARGO_COMMAND [CARGO_OPTIONS...]";
     eprintln!("{}", opts.usage(brief));
 
-    eprintln!();
     eprintln!("  Examples:");
     eprintln!();
     eprintln!("    $ cargo export target/tests -- test");

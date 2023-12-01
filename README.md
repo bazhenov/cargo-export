@@ -28,10 +28,14 @@ $ cargo install cargo-export
   $ cargo export target/tests -- test
   ```
 
+  Under the hood this command will run `cargo test --no-run --message-format=json` and copy all the generated binaries in the `target/tests` directory.
+
 - export all benchmark binaries to `target/bench` directory
   ```console
   $ cargo export target/bench -- bench
   ```
 
-Under the hood this command will run `cargo test --no-run --message-format=json` and copy all the generated binaries in
-the `target/tests` directory.
+- export all benchmark binaries to `target/bench` directory and add postfix `-main` to each executable
+  ```console
+  $ cargo export target/bench -t main -- bench
+  ```

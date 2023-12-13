@@ -39,3 +39,13 @@ $ cargo install cargo-export
   ```console
   $ cargo export target/bench -t main -- bench
   ```
+
+- build and export benchmarks with a specific feature
+  ```console
+  $ cargo export target/bench -- bench --feature=my-feature
+  ```
+
+- build and export benchmarks using nightly
+  ```console
+  $ cargo +nightly export target/bench -- bench
+  ```

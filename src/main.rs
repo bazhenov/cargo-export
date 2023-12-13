@@ -113,7 +113,7 @@ fn main() {
                 to.display()
             );
         }
-        fs::copy(from, file_name).expect("Unable to copy file");
+        fs::copy(from, to).expect("Unable to copy file");
     }
 }
 

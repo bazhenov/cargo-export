@@ -1,0 +1,10 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 2ec021e00e92566aa58b1b5c1f1fe7f6a5d443f017ec1e273807bd13cb48edee # shrinks to s = "a", tag = Tag(Some("0"))
+cc 01ee1cc391b4352177c3a94e9874752f3e8af945d17c02658628f09ce446c4fe # shrinks to s = "a", tag = Tag(Some("")), ext = Ext(Some("dll"))
+cc 0d64f9ce4475976aa8e1a7f6f8b5dbaf99619b03b408bb9489adb19af821dfc6 # shrinks to name = "᯼", tag = Tag(Some("")), ext = Ext(Some("dll")), hash = None
+cc 1459dea34a048ff681dcf1e8100c942644bd4f0649f3e61f9698c898d5217892 # shrinks to name = "𐒰", tag = Tag(None), ext = Ext(None), hash = Some(0)

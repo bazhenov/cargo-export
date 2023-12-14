@@ -15,3 +15,6 @@ keywords = ["cli", "cargo", "build"]
 getopts = "0.2.21"
 serde = { version = "1.0.193", features = ["derive"] }
 serde_json = "1.0.108"
+
+[dev-dependencies]
+proptest = "1.4.0"

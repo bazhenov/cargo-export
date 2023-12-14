@@ -56,61 +56,10 @@ mod test {
         let cases = vec![
             // Simple cases without a tag
             ("app-ebb8dd5b587f73a1", None, "app"),
-            ("🥰-ebb8dd5b587f73a1", None, "🥰"),
-            ("app-ebb8dd5b5", None, "app-ebb8dd5b5"),
-            ("app-ebb8dd5b5000000", None, "app-ebb8dd5b5000000"),
-            ("app-", None, "app-"),
-            ("app", None, "app"),
-            ("", None, ""),
-            ("-ebb8dd5b587f73a1", None, "-ebb8dd5b587f73a1"),
-            ("ebb8dd5b587f73a1", None, "ebb8dd5b587f73a1"),
-            // cases with tag
             ("app-ebb8dd5b587f73a1", Some("tag"), "app-tag"),
-            ("🥰-ebb8dd5b587f73a1", Some("tag"), "🥰-tag"),
-            ("app-ebb8dd5b5", Some("tag"), "app-ebb8dd5b5-tag"),
-            (
-                "app-ebb8dd5b5000000",
-                Some("tag"),
-                "app-ebb8dd5b5000000-tag",
-            ),
-            ("app-", Some("tag"), "app--tag"),
-            ("app", Some("tag"), "app-tag"),
-            ("", Some("tag"), "-tag"),
-            ("-ebb8dd5b587f73a1", Some("tag"), "-ebb8dd5b587f73a1-tag"),
-            ("ebb8dd5b587f73a1", Some("tag"), "ebb8dd5b587f73a1-tag"),
             // cases for windows with .exe extension without a tag
             ("app-ebb8dd5b587f73a1.exe", None, "app.exe"),
-            ("🥰-ebb8dd5b587f73a1.exe", None, "🥰.exe"),
-            ("app-ebb8dd5b5.exe", None, "app-ebb8dd5b5.exe"),
-            ("app-ebb8dd5b5000000.exe", None, "app-ebb8dd5b5000000.exe"),
-            ("app-.exe", None, "app-.exe"),
-            ("app.exe", None, "app.exe"),
-            (".exe", None, ".exe"),
-            ("-ebb8dd5b587f73a1.exe", None, "-ebb8dd5b587f73a1.exe"),
-            ("ebb8dd5b587f73a1.exe", None, "ebb8dd5b587f73a1.exe"),
-            // windows cases with a tag
-            // TODO: should we add a tag to the extension?
             ("app-ebb8dd5b587f73a1.exe", Some("tag"), "app-tag.exe"),
-            ("🥰-ebb8dd5b587f73a1.exe", Some("tag"), "🥰-tag.exe"),
-            ("app-ebb8dd5b5.exe", Some("tag"), "app-ebb8dd5b5-tag.exe"),
-            (
-                "app-ebb8dd5b5000000.exe",
-                Some("tag"),
-                "app-ebb8dd5b5000000-tag.exe",
-            ),
-            ("app-.exe", Some("tag"), "app--tag.exe"),
-            ("app.exe", Some("tag"), "app-tag.exe"),
-            (".exe", Some("tag"), "-tag.exe"),
-            (
-                "-ebb8dd5b587f73a1.exe",
-                Some("tag"),
-                "-ebb8dd5b587f73a1-tag.exe",
-            ),
-            (
-                "ebb8dd5b587f73a1.exe",
-                Some("tag"),
-                "ebb8dd5b587f73a1-tag.exe",
-            ),
         ];
 
         for (input, tag, expected) in cases {

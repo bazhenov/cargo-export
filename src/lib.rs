@@ -23,14 +23,19 @@ pub fn target_file_name(file_name: &str, tag_name: Option<&str>) -> String {
 /// If the hash or extension is not present, they are returned as `None`. Currently, only the `.exe` extension
 /// is supported.
 pub fn split_file_name(input: &str) -> (&str, Option<&str>, Option<&str>) {
-    const EXE_EXTENSION: &str = ".exe";
+    const EXTENSIONS: [&str; 4] = [".exe", ".so", ".dylib", ".dll"];
+
     const RUSTC_HASH_LENGTH: usize = 16;
 
-    let (file_name, extension) = if let Some(name) = input.strip_suffix(EXE_EXTENSION) {
-        (name, Some(&EXE_EXTENSION[1..]))
-    } else {
-        (input, None)
-    };
+    let mut file_name = input;
+    let mut extension = None;
+    for ext in EXTENSIONS {
+        if let Some(name) = input.strip_suffix(ext) {
+            file_name = name;
+            extension = Some(&ext[1..]);
+            break;
+        }
+    }
 
     let idx = match file_name.rfind('-') {
         Some(idx) if idx > 0 => idx,
@@ -59,6 +64,7 @@ mod test {
             ("app-ebb8dd5b587f73a1", Some("tag"), "app-tag"),
             // cases for windows with .exe extension without a tag
             ("app-ebb8dd5b587f73a1.exe", None, "app.exe"),
+            ("app-ebb8dd5b587f73a1.dll", None, "app.dll"),
             ("app-ebb8dd5b587f73a1.exe", Some("tag"), "app-tag.exe"),
         ];
 

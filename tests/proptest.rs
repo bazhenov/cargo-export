@@ -14,7 +14,7 @@ prop_compose! {
 }
 
 prop_compose! {
-    fn any_ext()(ext in "(|exe)") -> Ext {
+    fn any_ext()(ext in "(|exe|dylib|so|dll)") -> Ext {
         Ext(Some(ext).filter(|e| !e.is_empty()))
     }
 }

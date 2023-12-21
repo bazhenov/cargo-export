@@ -81,7 +81,7 @@ jobs:
           release_name="$name-$tag-${{ matrix.target }}"
           release_tar="${release_name}.tar.gz"
 
-          rm -f "release/.*"
+          rm -f release/.crates*
           cp README.md LICENSE release/
           mv release/ $release_name/
           tar czvf "$release_tar" "$release_name"

@@ -19,9 +19,12 @@ struct CompilerArtifact {
 fn main() {
     // skipping program name in arguments list
     let mut args = std::env::args().collect::<VecDeque<_>>();
-    // skipping "cargo" and "export"
+    // skipping program name in arguments list
     args.pop_front();
-    let subcommand_name = args.pop_front().unwrap_or_default();
+    // skipping subcommand name if it was called as `cargo export`
+    if let Some("export") = args.front().map(String::as_str) {
+        args.pop_front();
+    }
     let args = args.iter().map(|s| s.as_ref()).collect::<Vec<&str>>();
 
     // splitting our/cargo arguments using `--` as a delimeter
@@ -36,36 +39,35 @@ fn main() {
     let opts = build_opts();
     let matches = match opts.parse(self_args) {
         Ok(m) => m,
-        Err(f) => print_usage(&opts, Some(f)),
+        Err(f) => print_usage_and_exit(&opts, Some(f)),
     };
 
-    if matches.opt_present("h") {
-        print_usage(&opts, None);
+    if matches.opt_present("help") {
+        print_usage_and_exit(&opts, None);
     }
-
-    if subcommand_name != "export" {
-        print_usage(&opts, Some(Fail::UnrecognizedOption(subcommand_name)));
+    if matches.opt_present("version") {
+        print_version_and_exit();
     }
 
     if cargo_args.is_empty() {
-        print_usage(
+        print_usage_and_exit(
             &opts,
             Some(Fail::OptionMissing("CARGO_COMMAND".to_string())),
         );
     }
 
     let Some(target) = matches.free.get(0) else {
-        print_usage(&opts, Some(Fail::OptionMissing("PATH".to_string())));
+        print_usage_and_exit(&opts, Some(Fail::OptionMissing("PATH".to_string())));
     };
 
-    if !matches.opt_present("n") {
+    if !matches.opt_present("no-default-options") {
         // inserting options right after cargo subcommand
         cargo_args.insert(1, "--message-format=json");
         cargo_args.insert(1, "--no-run");
     }
 
-    let tag_name = matches.opt_str("t");
-    let verbose = matches.opt_present("v");
+    let tag_name = matches.opt_str("tag");
+    let verbose = matches.opt_present("verbose");
 
     let target_dir = PathBuf::from(target);
     if !target_dir.exists() {
@@ -133,11 +135,17 @@ fn build_opts() -> Options {
     );
     opts.optflag("v", "verbose", "prints files copied");
     opts.optflag("h", "help", "print this help menu");
+    opts.optflag("V", "version", "print version");
     opts
 }
 
-fn print_usage(opts: &Options, fail: Option<Fail>) -> ! {
-    if let Some(fail) = fail {
+fn print_version_and_exit() -> ! {
+    println!("cargo-export {}", env!("CARGO_PKG_VERSION"));
+    exit(0)
+}
+
+fn print_usage_and_exit(opts: &Options, fail: Option<Fail>) -> ! {
+    if let Some(fail) = &fail {
         eprintln!("[ERROR]: {}", fail);
         eprintln!();
     }
@@ -152,5 +160,6 @@ fn print_usage(opts: &Options, fail: Option<Fail>) -> ! {
     eprintln!("    $ cargo export target/benches -- bench");
     eprintln!("      Exporting all benchmark binaries in target/tests directory");
     eprintln!();
-    exit(1)
+    let exit_code = if fail.is_some() { 1 } else { 0 };
+    exit(exit_code)
 }

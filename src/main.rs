@@ -45,6 +45,8 @@ fn main() {
     if matches.opt_present("help") {
         print_usage_and_exit(&opts, None);
     }
+    if matches.opt_present("version") {
+        print_version_and_exit();
     }
 
     if cargo_args.is_empty() {
@@ -133,7 +135,13 @@ fn build_opts() -> Options {
     );
     opts.optflag("v", "verbose", "prints files copied");
     opts.optflag("h", "help", "print this help menu");
+    opts.optflag("V", "version", "print version");
     opts
+}
+
+fn print_version_and_exit() -> ! {
+    println!("cargo-export {}", env!("CARGO_PKG_VERSION"));
+    exit(0)
 }
 
 fn print_usage_and_exit(opts: &Options, fail: Option<Fail>) -> ! {

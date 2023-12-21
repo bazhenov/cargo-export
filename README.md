@@ -1,3 +1,9 @@
+[![CI](https://github.com/bazhenov/cargo-export/actions/workflows/ci.yaml/badge.svg)](https://github.com/bazhenov/cargo-export/actions/workflows/ci.yaml)
+[![Crates.io](https://img.shields.io/crates/v/cargo-export)
+](https://crates.io/crates/cargo-export)
+[![GitHub release (with filter)](https://img.shields.io/github/v/release/bazhenov/cargo-export)](https://github.com/bazhenov/cargo-export/releases)
+[![GitHub License](https://img.shields.io/github/license/bazhenov/cargo-export)](https://github.com/bazhenov/cargo-export?tab=MIT-1-ov-file#readme)
+
 # Exporting cargo compiler artifacts (tests, benches)
 
 ## Motivation

@@ -56,7 +56,7 @@ fn main() {
         );
     }
 
-    let Some(target) = matches.free.get(0) else {
+    let Some(target) = matches.free.first() else {
         print_usage_and_exit(&opts, Some(Fail::OptionMissing("PATH".to_string())));
     };
 

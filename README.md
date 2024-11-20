@@ -29,6 +29,8 @@ $ cargo install cargo-export
 
 ## Using
 
+### Local
+
 - export all test binaries to `target/tests` directory
   ```console
   $ cargo export target/tests -- test
@@ -55,3 +57,21 @@ $ cargo install cargo-export
   ```console
   $ cargo +nightly export target/bench -- bench
   ```
+
+### GitHub Actions
+
+You can use `taiki-e/install-action@v2` to install `cargo-export` in your GitHub Actions workflow.
+
+```yaml
+name: Test
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-export
+      - name: Export Tests
+        run: cargo export target/bench -- test
+```

@@ -1,0 +1,9 @@
+bin.name = "cargo-export"
+args = ["target/export", "-v", "--", "test"]
+fs.cwd = "test-project"
+
+stderr = '''[cargo-export] copying '[CWD]/target/debug/deps/hello-[..]' to 'target/export/hello'
+'''
+
+[env.add]
+CARGO_TERM_QUIET = "true"

@@ -140,12 +140,8 @@ fn build_opts() -> Options {
         "do not add default cargo options (--no-run, --message-format)",
     );
     opts.optflag("v", "verbose", "prints files copied");
-    opts.optflag(
-        "d",
-        "dry-run",
-        "dry run, do not copy any files (implies --verbose)",
-    );
-    opts.optflag("h", "help", "print this help menu");
+    opts.optflag("d", "dry-run", "do not copy any files (implies --verbose)");
+    opts.optflag("h", "help", "print help");
     opts.optflag("V", "version", "print version");
     opts
 }

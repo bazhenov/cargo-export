@@ -1,0 +1,24 @@
+bin.name = "cargo-export"
+args = ["--help"]
+stderr = '''
+usage: cargo export [OPTIONS] PATH -- CARGO_COMMAND [CARGO_OPTIONS...]
+
+Options:
+    -t, --tag TAG       tag name to add to the resulting binaries file names
+    -n, --no-default-options[..]
+                        do not add default cargo options (--no-run,
+                        --message-format)
+    -v, --verbose       prints files copied
+    -d, --dry-run       do not copy any files (implies --verbose)
+    -h, --help          print help
+    -V, --version       print version
+
+  Examples:
+
+    $ cargo export target/tests -- test
+      Exporting all test binaries in target/tests directory
+
+    $ cargo export target/benches -- bench
+      Exporting all benchmark binaries in target/tests directory
+
+'''

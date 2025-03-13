@@ -1,7 +1,7 @@
 bin.name = "cargo-export"
 args = ["target/export", "-v", "--", "build"]
 fs.cwd = "test-project"
-stderr = '''[cargo-export] copying '[CWD]/target/debug/hello' to 'target/export/hello'
+stderr = '''[cargo-export] copying '[CWD]/target/debug/hello[EXE]' to 'target/export/hello[EXE]'
 '''
 
 [env.add]

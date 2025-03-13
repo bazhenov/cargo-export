@@ -17,9 +17,9 @@ struct CompilerArtifact {
 }
 
 fn main() {
-    // skipping program name in arguments list
     let mut args = std::env::args().collect::<VecDeque<_>>();
     // skipping program name in arguments list
+
     args.pop_front();
     // skipping subcommand name if it was called as `cargo export`
     if let Some("export") = args.front().map(String::as_str) {
@@ -49,30 +49,27 @@ fn main() {
         print_version_and_exit();
     }
 
-    if cargo_args.is_empty() {
-        print_usage_and_exit(
-            &opts,
-            Some(Fail::OptionMissing("CARGO_COMMAND".to_string())),
-        );
-    }
-
     let Some(target) = matches.free.first() else {
         print_usage_and_exit(&opts, Some(Fail::OptionMissing("PATH".to_string())));
     };
 
+    let Some(cargo_cmd) = cargo_args.first() else {
+        print_usage_and_exit(
+            &opts,
+            Some(Fail::OptionMissing("CARGO_COMMAND".to_string())),
+        );
+    };
     if !matches.opt_present("no-default-options") {
+        if *cargo_cmd == "bench" || *cargo_cmd == "test" {
+            cargo_args.insert(1, "--no-run");
+        }
         // inserting options right after cargo subcommand
         cargo_args.insert(1, "--message-format=json");
-        cargo_args.insert(1, "--no-run");
     }
 
     let tag_name = matches.opt_str("tag");
-    let verbose = matches.opt_present("verbose");
-
-    let target_dir = PathBuf::from(target);
-    if !target_dir.exists() {
-        fs::create_dir_all(&target_dir).unwrap();
-    }
+    let dry_run = matches.opt_present("dry-run");
+    let verbose = matches.opt_present("verbose") || dry_run;
 
     let mut command = Command::new("cargo")
         .args(cargo_args)
@@ -103,6 +100,12 @@ fn main() {
         exit(1);
     }
 
+    let target_dir = PathBuf::from(target);
+    if !dry_run && !target_dir.exists() {
+        fs::create_dir_all(&target_dir).unwrap();
+    }
+
+    // Copying artifacts
     for artfact in artifacts {
         let from = PathBuf::from(&artfact.executable);
         let file_name = from.file_name().and_then(|n| n.to_str()).unwrap();
@@ -111,12 +114,15 @@ fn main() {
 
         if verbose {
             eprintln!(
-                "[cargo-export] copying '{}' to '{}'",
+                "[cargo-export] copying '{}' to '{}'{}",
                 from.display(),
-                to.display()
+                to.display(),
+                if dry_run { " (dry run)" } else { "" }
             );
         }
-        fs::copy(from, to).expect("Unable to copy file");
+        if !dry_run {
+            fs::copy(from, to).expect("Unable to copy file");
+        }
     }
 }
 
@@ -134,6 +140,11 @@ fn build_opts() -> Options {
         "do not add default cargo options (--no-run, --message-format)",
     );
     opts.optflag("v", "verbose", "prints files copied");
+    opts.optflag(
+        "d",
+        "dry-run",
+        "dry run, do not copy any files (implies --verbose)",
+    );
     opts.optflag("h", "help", "print this help menu");
     opts.optflag("V", "version", "print version");
     opts

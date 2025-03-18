@@ -1,6 +1,6 @@
 [package]
 name = "cargo-export"
-version = "0.2.5"
+version = "0.3.0"
 edition = "2021"
 license = "MIT"
 description = "Utility to export compiler artifacts from cargo build process"
@@ -8,7 +8,11 @@ homepage = "https://github.com/bazhenov/cargo-export"
 documentation = "https://github.com/bazhenov/cargo-export"
 repository = "https://github.com/bazhenov/cargo-export"
 readme = "README.md"
-categories = ["development-tools::cargo-plugins", "command-line-utilities", "development-tools::build-utils"]
+categories = [
+    "development-tools::cargo-plugins",
+    "command-line-utilities",
+    "development-tools::build-utils",
+]
 keywords = ["cli", "cargo", "build"]
 
 [dependencies]
